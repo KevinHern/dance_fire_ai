@@ -107,6 +107,7 @@ def key_pressed():
                 beat_circles.change_anchor(tile_direction=track.track[next_tile])
                 next_tile += 1
                 if next_tile >= len(track.track):
+                    print("Track complete")
                     exit()
             else:
                 print("Game over")

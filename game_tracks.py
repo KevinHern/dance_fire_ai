@@ -3,12 +3,24 @@ from constants import TileDirection
 track_dummy = [
     TileDirection.INITIAL,
     TileDirection.RIGHT,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.LEFT,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
     TileDirection.RIGHT,
-    TileDirection.RIGHT,
-    TileDirection.UP,
-    TileDirection.RIGHT,
-    TileDirection.UP,
-    TileDirection.RIGHT,
+
+TileDirection.RIGHT,
+TileDirection.RIGHT,
+TileDirection.RIGHT,
+TileDirection.RIGHT,
+TileDirection.UP,
+TileDirection.UP,
+TileDirection.UP,
+TileDirection.UP,
+
+TileDirection.LEFT,
+TileDirection.LEFT,
 ]
 
 track_one = [

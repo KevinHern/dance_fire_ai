@@ -83,7 +83,8 @@ class Track:
         self.no_more_chunks_flag = False
 
         self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
-        self.chunk = 0
+        self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
+        self.chunk = 8
 
     def map_direction_to_tile(self, tile_direction):
         if tile_direction == TileDirection.UP:
@@ -104,9 +105,12 @@ class Track:
         number_tiles_to_preload = self.chunk_size
         if remaining_tiles < self.chunk_size:
             number_tiles_to_preload = remaining_tiles
+        number_tiles_to_preload += self.chunk
+
 
         # Preloading tiles
         to_preload_chunk = self.track[self.chunk:number_tiles_to_preload]
+        print(to_preload_chunk)
 
         # Creating tiles
         self.cached_track_chunk = list(map(self.map_direction_to_tile, to_preload_chunk))
@@ -193,7 +197,7 @@ class Track:
             self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
         elif next_index_tile == 2 and not self.transition_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
-        elif next_index_tile == 4 and not self.preloaded_chunk_flag and not self.no_more_chunks_flag:
+        elif next_index_tile == 4 and not self.preloaded_chunk_flag:
             self.preload_chunk()
 
         #print(self.pivot_normal, self.pivot_transition)
