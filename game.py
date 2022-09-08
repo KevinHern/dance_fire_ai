@@ -3,7 +3,7 @@ from p5 import *
 from beat_circles import BeatCircles
 from track import Track, TrackTile, draw_track_tile, map_direction_to_offset
 from constants import TileDirection
-from game_tracks import track_one
+from game_tracks import track_one, track_dummy
 
 # Initializing constants
 width = 700
@@ -35,7 +35,7 @@ track = Track(
     pivot_x=starting_x,
     pivot_y=starting_y,
     tile_size=circles_diameter / 2,
-    track=track_one
+    track=track_dummy
     # track=[
     #     TileDirection.INITIAL,
     #     TileDirection.RIGHT,
@@ -85,10 +85,10 @@ def check_circles_angle():
     current_tan = abs(tan(beat_circles.angle))
 
     if track.track[next_tile].value > 2:
-        #print(horizontal_threshold, current_tan)
+        print(horizontal_threshold, current_tan)
         return current_tan <= horizontal_threshold
     else:
-        #print(vertical_threshold, current_tan)
+        print(vertical_threshold, current_tan)
         return current_tan >= vertical_threshold
 
 
@@ -109,6 +109,7 @@ def key_pressed():
                 if next_tile >= len(track.track):
                     exit()
             else:
+                print("Game over")
                 game_over = True
                 exit()
         else:
@@ -116,7 +117,7 @@ def key_pressed():
             if check_circles_angle():
                 game_has_started = True
                 beat_circles.change_anchor(tile_direction=track.track[next_tile])
-                screen_speed = (-1, 0)
+                screen_speed = (0, 0)
                 next_tile += 1
     else:
         pass

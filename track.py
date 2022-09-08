@@ -1,6 +1,7 @@
 from p5 import *
 from constants import *
 import numpy as np
+from math import ceil
 
 
 def draw_track_tile(tile):
@@ -15,17 +16,51 @@ class Track:
     def __init__(self, pivot_x, pivot_y, tile_size, track):
         # Initializing track
         self.track = track
+        self.total_tiles = len(track)
         self.tile_size = tile_size
+
+        # Initializing constant tiles objects for drawing
+        self.TILE_UP = TrackTile(
+            corner_x=0,
+            corner_y=-self.tile_size,
+            tile_size=self.tile_size,
+            direction=TileDirection.UP
+        )
+        self.TILE_DOWN = TrackTile(
+            corner_x=0,
+            corner_y=self.tile_size,
+            tile_size=self.tile_size,
+            direction=TileDirection.DOWN
+        )
+        self.TILE_RIGHT = TrackTile(
+            corner_x=self.tile_size,
+            corner_y=0,
+            tile_size=self.tile_size,
+            direction=TileDirection.RIGHT
+        )
+        self.TILE_LEFT = TrackTile(
+            corner_x=-self.tile_size,
+            corner_y=0,
+            tile_size=self.tile_size,
+            direction=TileDirection.LEFT
+        )
+        self.TILE_INITIAL = TrackTile(
+            corner_x=-self.tile_size / 2,
+            corner_y=-self.tile_size / 2,
+            tile_size=self.tile_size,
+            direction=TileDirection.INITIAL
+        )
 
         # Initializing track centers
         self.pivot_normal = (pivot_x, pivot_y)
         self.pivot_transition = (pivot_x, pivot_y)
 
         # Initializing constants
-        self.chunk = 0
         self.normal_track_size = 4
         self.transition_track_size = 4
         self.chunk_size = self.normal_track_size + self.transition_track_size
+        self.chunk = 0
+        self.total_chunks = ceil(len(self.track) / self.chunk_size)
 
         # Initializing tracks
         self.cached_track_chunk = []
@@ -41,51 +76,27 @@ class Track:
         self.preloaded_chunk_flag = False
         self.normal_chunk_flag = False
         self.transition_chunk_flag = False
+        self.no_more_chunks_flag = False
 
         # Loading first chunk
         self.preload_chunk()
-        self.preloaded_chunk = False
-        self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
+        self.no_more_chunks_flag = False
 
+        self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
         self.chunk = 0
 
     def map_direction_to_tile(self, tile_direction):
         if tile_direction == TileDirection.UP:
-            return TrackTile(
-                corner_x=0,
-                corner_y=-self.tile_size,
-                tile_size=self.tile_size,
-                direction=tile_direction
-            )
+            return self.TILE_UP
         elif tile_direction == TileDirection.DOWN:
-            return TrackTile(
-                corner_x=0,
-                corner_y=self.tile_size,
-                tile_size=self.tile_size,
-                direction=tile_direction
-            )
+            return self.TILE_DOWN
         elif tile_direction == TileDirection.RIGHT:
-            return TrackTile(
-                corner_x=self.tile_size,
-                corner_y=0,
-                tile_size=self.tile_size,
-                direction=tile_direction
-            )
+            return self.TILE_RIGHT
         elif tile_direction == TileDirection.LEFT:
-            return TrackTile(
-                corner_x=-self.tile_size,
-                corner_y=0,
-                tile_size=self.tile_size,
-                direction=tile_direction
-            )
+            return self.TILE_LEFT
         else:
             # The first square
-            return TrackTile(
-                corner_x=-self.tile_size / 2,
-                corner_y=-self.tile_size / 2,
-                tile_size=self.tile_size,
-                direction=tile_direction
-            )
+            return self.TILE_INITIAL
 
     def preload_chunk(self):
         # Calculating if its possible to load a full chunk
@@ -110,47 +121,61 @@ class Track:
         self.chunk += self.chunk_size
 
         # Set Flag
-        self.preloaded_chunk = True
+        self.no_more_chunks_flag = self.chunk == self.total_tiles
+        self.preloaded_chunk_flag = True
 
     def load_track_chunk(self, track_chunk_type):
         if track_chunk_type == TrackChunkType.NORMAL:
-            # Calculating new center for the  transition track
-            offset_x = sum(
-                list(map(lambda x: map_direction_to_horizontal_unitary(x.direction), self.transition_track))
-            ) * self.tile_size
-            offset_y = sum(
-                list(map(lambda x: map_direction_to_vertical_unitary(x.direction), self.transition_track))
-            ) * self.tile_size
+            if not self.no_more_chunks_flag:
+                # Loading new normal track chunk
+                self.normal_track = self.cached_track_chunk[0:self.normal_track_size]
 
-            self.pivot_normal = np.add(self.pivot_transition, (-offset_x, offset_y))
+                # Calculating new center for the transition track
+                offset_x = (sum(
+                    list(map(lambda x: map_direction_to_horizontal_unitary(x.direction), self.transition_track))
+                ) + map_direction_to_horizontal_unitary(self.normal_track[0].direction)) * self.tile_size
+                offset_y = (sum(
+                    list(map(lambda x: map_direction_to_vertical_unitary(x.direction), self.transition_track))
+                ) + map_direction_to_vertical_unitary(self.normal_track[0].direction)) * self.tile_size
 
-            # Loading new normal track chunk
-            self.normal_track = self.cached_track_chunk[0:self.normal_track_size]
+                # Moving to new center
+                self.pivot_normal = np.subtract(self.pivot_transition, (offset_x, offset_y))
 
-            # Modifying flags
-            self.normal_chunk_flag = True
-            self.transition_chunk_flag = False
-            self.preloaded_chunk_flag = False
+                # Setting first tile as Initial
+                self.normal_track[0] = self.TILE_INITIAL
+
+                # Modifying flags
+                self.normal_chunk_flag = True
+                self.transition_chunk_flag = False
+                self.preloaded_chunk_flag = False
+            else:
+                self.normal_track.clear()
 
         elif track_chunk_type == TrackChunkType.TRANSITION:
-            # Calculating new center for the  transition track
-            offset_x = sum(
-                list(map(lambda x: map_direction_to_horizontal_unitary(x.direction), self.normal_track))
-            ) * self.tile_size
-            offset_y = sum(
-                list(map(lambda x: map_direction_to_vertical_unitary(x.direction), self.normal_track))
-            ) * self.tile_size
+            if not self.no_more_chunks_flag:
+                # Loading new transition track chunk
+                self.transition_track = self.cached_track_chunk[self.normal_track_size:]
 
-            print(self.pivot_transition)
-            self.pivot_transition = np.add(self.pivot_normal, (-offset_x, offset_y))
-            print(self.pivot_transition)
+                # Calculating new center for the  transition track
+                offset_x = (sum(
+                    list(map(lambda x: map_direction_to_horizontal_unitary(x.direction), self.normal_track))
+                ) + map_direction_to_horizontal_unitary(self.transition_track[0].direction)) * self.tile_size
+                offset_y = ( sum(
+                    list(map(lambda x: map_direction_to_vertical_unitary(x.direction), self.normal_track))
+                ) + map_direction_to_vertical_unitary(self.transition_track[0].direction)) * self.tile_size
 
-            # Loading new transition track chunk
-            self.transition_track = self.cached_track_chunk[self.normal_track_size:]
+                # Moving to new center
+                self.pivot_transition = np.subtract(self.pivot_normal, (offset_x, offset_y))
+                print(self.pivot_normal, self.pivot_transition)
 
-            # Modifying flags
-            self.normal_chunk_flag = False
-            self.transition_chunk_flag = True
+                # Setting first tile as Initial
+                self.transition_track[0] = self.TILE_INITIAL
+
+                # Modifying flags
+                self.normal_chunk_flag = False
+                self.transition_chunk_flag = True
+            else:
+                self.transition_track.clear()
         else:
             raise Exception("Error in 'load_track_chunk': Unknown {} TrackChunkType detected".format(track_chunk_type))
 
@@ -158,19 +183,20 @@ class Track:
         # Move both centers
         self.pivot_normal = np.add(self.pivot_normal, speed)
 
-        self.pivot_transition = np.add(self.pivot_normal, speed)
+        self.pivot_transition = np.add(self.pivot_transition, speed)
 
     def draw(self, tile_index):
         # Checking if its necessary to preload
         next_index_tile = tile_index % 8
-        print(next_index_tile, self.preloaded_chunk_flag)
-        if next_index_tile == 6 and self.normal_chunk_flag:
+        #print(next_index_tile, self.normal_chunk_flag, self.transition_chunk_flag, self.preloaded_chunk_flag)
+        if next_index_tile == 6 and not self.normal_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
-        elif next_index_tile == 2 and self.transition_chunk_flag:
+        elif next_index_tile == 2 and not self.transition_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
-        elif next_index_tile == 4 and not self.preloaded_chunk_flag:
+        elif next_index_tile == 4 and not self.preloaded_chunk_flag and not self.no_more_chunks_flag:
             self.preload_chunk()
 
+        #print(self.pivot_normal, self.pivot_transition)
         with push_matrix():
             # Drawing Normal track
             translate(self.pivot_normal[0], self.pivot_normal[1])
