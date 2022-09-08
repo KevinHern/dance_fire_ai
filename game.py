@@ -17,10 +17,6 @@ circles_radius = 40
 game_has_started = False
 game_over = False
 
-relation = (circles_radius * 0.35) / circles_diameter
-horizontal_threshold = abs(tan(relation))
-vertical_threshold = abs(tan(1 / relation))
-
 next_tile = 1
 
 # Initializing Objects
@@ -77,21 +73,6 @@ def draw():
     beat_circles.draw()
 
 
-def check_circles_angle():
-    global beat_circles
-    global next_tile
-
-    # Calculate current TAN value
-    current_tan = abs(tan(beat_circles.angle))
-
-    if track.track[next_tile].value > 2:
-        print(horizontal_threshold, current_tan)
-        return current_tan <= horizontal_threshold
-    else:
-        print(vertical_threshold, current_tan)
-        return current_tan >= vertical_threshold
-
-
 def key_pressed():
     keyIndex = -1
     global game_has_started
@@ -103,23 +84,20 @@ def key_pressed():
     if ord(str(key)) > 0:
         # Check game state
         if game_has_started:
-            if check_circles_angle():
-                beat_circles.change_anchor(tile_direction=track.track[next_tile])
+            if beat_circles.change_anchor(tile_direction=track.track[next_tile]):
                 next_tile += 1
                 if next_tile >= len(track.track):
                     print("Track complete")
                     exit()
             else:
-                print("Game over")
-                game_over = True
+                print("Game Over")
                 exit()
         else:
             # Changing game flag
-            if check_circles_angle():
-                game_has_started = True
-                beat_circles.change_anchor(tile_direction=track.track[next_tile])
-                screen_speed = (0, 0)
+            if beat_circles.change_anchor(tile_direction=track.track[next_tile]):
+                screen_speed = (-2, 0)
                 next_tile += 1
+                game_has_started = True
     else:
         pass
 
