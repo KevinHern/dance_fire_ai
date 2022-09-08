@@ -4,11 +4,18 @@ from constants import *
 
 class BeatCircles:
     def __init__(self, frame_rate, bpm, position_x, position_y, diameter=10, circle_radius=20):
-        # Rotation Variables
+        # Line Variables
+        self.radius = diameter / 2
+
+        # Circle Variables
+        self.circle_radius = circle_radius
+
+        # Physics Variables
         hertz = 60/bpm
         half_perimeter_time = (1/hertz)/2
         self.rotation_speed = 2*PI/(half_perimeter_time*frame_rate)
         self.angle = PI
+        self.linear_velocity = self.rotation_speed * self.radius
 
         # Anchor variables
         self.position_x = position_x
@@ -16,12 +23,6 @@ class BeatCircles:
 
         self.anchor_x = 0
         self.anchor_y = 0
-
-        # Line Variables
-        self.radius = diameter/2
-
-        # Circle Variables
-        self.circle_radius = circle_radius
 
         # Anchor variables
         relation = (circle_radius * 0.35) / diameter

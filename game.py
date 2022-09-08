@@ -1,8 +1,8 @@
 import p5
 from p5 import *
 from beat_circles import BeatCircles
-from track import Track, TrackTile, draw_track_tile, map_direction_to_offset
-from constants import TileDirection
+from track import Track
+from constants import map_direction_to_track_speed
 from game_tracks import track_one, track_dummy
 
 # Initializing constants
@@ -27,11 +27,14 @@ beat_circles = BeatCircles(frame_rate=60,
                            diameter=circles_diameter,
                            circle_radius=circles_radius
                            )
+
+the_track = track_one
+
 track = Track(
     pivot_x=starting_x,
     pivot_y=starting_y,
     tile_size=circles_diameter / 2,
-    track=track_dummy
+    track=the_track
     # track=[
     #     TileDirection.INITIAL,
     #     TileDirection.RIGHT,
@@ -44,6 +47,18 @@ track = Track(
     #     # TileDirection.UP,
     #     # TileDirection.RIGHT,
     # ]
+)
+
+track_velocity_vector = list(
+    map(
+        lambda x:
+        map_direction_to_track_speed(
+            circles_linear_velocity=beat_circles.linear_velocity,
+            tile_direction=x,
+            alpha=3
+        ),
+        the_track
+    )
 )
 
 # Initializing Vectors
@@ -74,7 +89,6 @@ def draw():
 
 
 def key_pressed():
-    keyIndex = -1
     global game_has_started
     global game_over
     global screen_speed
@@ -85,6 +99,7 @@ def key_pressed():
         # Check game state
         if game_has_started:
             if beat_circles.change_anchor(tile_direction=track.track[next_tile]):
+                screen_speed = track_velocity_vector[next_tile]
                 next_tile += 1
                 if next_tile >= len(track.track):
                     print("Track complete")
@@ -95,7 +110,7 @@ def key_pressed():
         else:
             # Changing game flag
             if beat_circles.change_anchor(tile_direction=track.track[next_tile]):
-                screen_speed = (-2, 0)
+                screen_speed = track_velocity_vector[next_tile]
                 next_tile += 1
                 game_has_started = True
     else:

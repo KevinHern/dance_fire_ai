@@ -2,6 +2,22 @@ from enum import Enum
 from p5 import PI, HALF_PI
 
 
+def map_direction_to_track_speed(circles_linear_velocity, tile_direction, alpha=2.5):
+    velocity = [0, 0]
+    if tile_direction == TileDirection.UP:
+        velocity[1] = circles_linear_velocity/alpha
+    elif tile_direction == TileDirection.DOWN:
+        velocity[1] = -circles_linear_velocity/alpha
+    elif tile_direction == TileDirection.RIGHT:
+        velocity[0] = -circles_linear_velocity/alpha
+    elif tile_direction == TileDirection.LEFT:
+        velocity[0] = circles_linear_velocity/alpha
+    else:
+        pass
+
+    return velocity
+
+
 def map_direction_to_vertical_unitary(tile_direction):
     if tile_direction == TileDirection.UP:
         return 1
