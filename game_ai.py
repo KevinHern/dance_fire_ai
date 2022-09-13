@@ -10,12 +10,16 @@ from track import Track
 # Track imports
 from game_tracks import track_ai
 
+# Optimization imports
+from threading import Thread
+from multi_threading import execute_agent_batch
+
 
 ### INITIALIZING CONSTANTS ###
 # Simulation constants
 generation = 1
-population = 100
-max_lifespan = 120
+population = 500
+max_lifespan = 500
 lifespan = max_lifespan
 
 agents_to_display = np.array([randint(0, population-1), randint(0, population-1), randint(0, population-1)])
@@ -23,6 +27,15 @@ agents_to_display = np.array([randint(0, population-1), randint(0, population-1)
 mutation_probability = 0.10
 min_alpha = 0.90
 max_alpha = 1.10
+
+# Optimization constants
+number_threads = 5
+agents_per_thread = population // number_threads
+remaining_agents = population % number_threads
+agents_thread_limit = []
+for thread_id in range(number_threads):
+    agents_thread_limit.append(agents_per_thread*thread_id)
+agents_thread_limit.append(population)
 
 # Screen constants
 width = 1250
@@ -112,11 +125,31 @@ def draw():
     # Draw the track for only one agent (the previous best one) to save up memory
     track.draw(tile_index=best_agent.next_tile)
 
-    # For each agent, perform the action
-    for agent in agents:
-        agent.perform_action(next_tile_direction=track.track[agent.next_tile])
+    # MULTITHREADING
+    # Create Threads
+    threads = []
+    for number_thread in range(number_threads):
+        threads.append(
+            Thread(
+                target=execute_agent_batch,
+                args=(agents[agents_thread_limit[number_thread]:agents_thread_limit[number_thread+1]], track)
+            )
+        )
 
+    # Start threads
+    for agent_thread in threads:
+        agent_thread.start()
+
+    # Perform best agent action
     best_agent.perform_action(next_tile_direction=track.track[best_agent.next_tile])
+
+    # Wait for threads to finish
+    for agent_thread in threads:
+        agent_thread.join()
+
+    # OLD SEQUENTIAL IMPLEMENTATION
+    # for agent in agents:
+    #     agent.perform_action(next_tile_direction=track.track[agent.next_tile])
 
     # Draw 3 random agents and the previous best agent on the screen
     best_agent.agent.draw()
@@ -139,8 +172,8 @@ def draw():
         best_agent.next_tile = 1
         #print(best_agent.fitness, agents[population-1].fitness)
 
-        # Third: Select top 50%
-        parents = agents[0:ceil(population/2)]
+        # Third: Select top 20%
+        parents = agents[0:(population//5)]
 
         # Fourth: Do crossover
         agents = np.array(
@@ -160,14 +193,17 @@ def draw():
             ))
         )
 
-        # Fifth: Reset simulation and change the balls to draw
+        # Fifth: Reset simulation variables
         agents_to_display = np.array([randint(0, population-1), randint(0, population-1), randint(0, population-1)])
-
-        best_agent.reset(learn=False)
-
         lifespan = max_lifespan
         generation += 1
         print("Generation:", generation)
+
+        # Reset best agent
+        best_agent.reset(learn=False)
+
+        # Reset track
+        track.reset()
 
 
 def mouse_pressed():
@@ -180,8 +216,7 @@ if __name__ == '__main__':
 
 '''
     # TO DO
-    - Optimize the draw() function by paralelizing the perform_action with multi threading
-    - Penalize the AI for each full spin it does without doing nothing
-    - Fix the 'action' button's direction
+    - Optimize the draw() function by parallelize the perform_action with multi threading
     - Add screen info
+    - Save best weights
 '''

@@ -16,6 +16,7 @@ class BeatCircles:
         self.rotation_speed = 2*PI/(half_perimeter_time*frame_rate)
         self.angle = PI
         self.linear_velocity = self.rotation_speed * self.radius
+        self.spins = 0
 
         # Anchor variables
         self.starting_x = starting_x
@@ -36,6 +37,8 @@ class BeatCircles:
 
             # Rotate
             self.angle += self.rotation_speed
+            self.spins += self.angle // TWO_PI
+            self.angle = self.angle % TWO_PI
             rotate(self.angle)
 
             # Draw Anchor circle
@@ -74,5 +77,8 @@ class BeatCircles:
         self.position_x = self.starting_x
         self.position_y = self.starting_y
 
-        # Restting angle
+        # Resetting angle
         self.angle = PI
+
+        # Resetting spins
+        self.spins = 0
