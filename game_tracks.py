@@ -1,5 +1,34 @@
 from constants import TileDirection
 
+track_ai = [
+    TileDirection.INITIAL,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+    TileDirection.RIGHT,
+
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+    TileDirection.DOWN,
+
+    TileDirection.LEFT,
+    TileDirection.LEFT,
+    TileDirection.LEFT,
+    TileDirection.LEFT,
+    TileDirection.UP,
+    TileDirection.UP,
+    TileDirection.UP,
+    TileDirection.UP,
+]
+
 track_dummy = [
     TileDirection.INITIAL,
     TileDirection.RIGHT,

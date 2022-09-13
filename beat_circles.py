@@ -3,7 +3,7 @@ from constants import *
 
 
 class BeatCircles:
-    def __init__(self, frame_rate, bpm, position_x, position_y, diameter=10, circle_radius=20):
+    def __init__(self, frame_rate, bpm, starting_x, starting_y, diameter=10, circle_radius=20):
         # Line Variables
         self.radius = diameter / 2
 
@@ -18,11 +18,11 @@ class BeatCircles:
         self.linear_velocity = self.rotation_speed * self.radius
 
         # Anchor variables
-        self.position_x = position_x
-        self.position_y = position_y
+        self.starting_x = starting_x
+        self.starting_y = starting_y
 
-        self.anchor_x = 0
-        self.anchor_y = 0
+        self.position_x = starting_x
+        self.position_y = starting_y
 
         # Anchor variables
         relation = (circle_radius * 0.35) / diameter
@@ -49,10 +49,10 @@ class BeatCircles:
         current_tan = abs(tan(self.angle))
 
         if next_tile.value > 2:
-            print(self.horizontal_threshold, current_tan)
+            #print(self.horizontal_threshold, current_tan)
             return current_tan <= self.horizontal_threshold
         else:
-            print(self.vertical_threshold, current_tan)
+            #print(self.vertical_threshold, current_tan)
             return current_tan >= self.vertical_threshold
 
     def change_anchor(self, tile_direction):
@@ -70,3 +70,11 @@ class BeatCircles:
     def translate(self, speed):
         self.position_x += speed[0]
         self.position_y += speed[1]
+
+    def reset(self):
+        # Resetting to the initial position
+        self.position_x = self.starting_x
+        self.position_y = self.starting_y
+
+        # Restting angle
+        self.angle = PI

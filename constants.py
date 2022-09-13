@@ -20,18 +20,18 @@ def map_direction_to_track_speed(circles_linear_velocity, tile_direction, alpha=
 
 def map_direction_to_vertical_unitary(tile_direction):
     if tile_direction == TileDirection.UP:
-        return 1
-    elif tile_direction == TileDirection.DOWN:
         return -1
+    elif tile_direction == TileDirection.DOWN:
+        return 1
     else:
         return 0
 
 
 def map_direction_to_horizontal_unitary(tile_direction):
     if tile_direction == TileDirection.RIGHT:
-        return -1
-    elif tile_direction == TileDirection.LEFT:
         return 1
+    elif tile_direction == TileDirection.LEFT:
+        return -1
     else:
         return 0
 

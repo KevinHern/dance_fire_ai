@@ -52,15 +52,17 @@ class Track:
         )
 
         # Initializing track centers
-        self.pivot_normal = (pivot_x, pivot_y)
-        self.pivot_transition = (pivot_x, pivot_y)
+        self.starting_x = pivot_x
+        self.starting_y = pivot_y
+        self.pivot_normal = (self.starting_x, self.starting_y)
+        self.pivot_transition = (self.starting_x, self.starting_y)
+
+        print(self.pivot_normal, self.pivot_transition)
 
         # Initializing constants
         self.normal_track_size = 4
         self.transition_track_size = 4
         self.chunk_size = self.normal_track_size + self.transition_track_size
-        self.chunk = 0
-        self.total_chunks = ceil(len(self.track) / self.chunk_size)
 
         # Initializing tracks
         self.cached_track_chunk = []
@@ -70,7 +72,11 @@ class Track:
         self.transition_track = []
         self.transition_track_directions = []
 
-        self.cached_track_speed = (0, 0)
+        # Calculating total chunks
+        total_full_chunks = len(self.track) // self.chunk_size
+        remaining_tiles = len(self.track) % self.chunk_size
+        self.total_normal_track_chunks = total_full_chunks + (1 if remaining_tiles > 0 else 0)
+        self.total_transition_track_chunks = total_full_chunks + (1 if remaining_tiles > self.normal_track_size else 0)
 
         # Initializing flags
         self.preloaded_chunk_flag = False
@@ -78,13 +84,52 @@ class Track:
         self.transition_chunk_flag = False
         self.no_more_chunks_flag = False
 
+        # Initializing counters
+        self.tile_counter = 0
+        self.normal_track_chunk_counter = 0
+        self.transition_track_chunk_counter = 0
+
+        #print(self.total_normal_track_chunks, self.total_transition_track_chunks)
+
         # Loading first chunk
         self.preload_chunk()
         self.no_more_chunks_flag = False
 
         self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
         self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
-        self.chunk = 8
+
+        self.transition_track_chunk_counter -= 1
+
+    def reset(self):
+        # Resetting position
+        self.pivot_normal = (self.starting_x, self.starting_y)
+        self.pivot_transition = (self.starting_x, self.starting_y)
+
+        print(self.pivot_normal, self.pivot_transition)
+
+        # Resetting Flags
+        self.preloaded_chunk_flag = False
+        self.normal_chunk_flag = False
+        self.transition_chunk_flag = False
+        self.no_more_chunks_flag = False
+
+        # Resetting Counters
+        self.tile_counter = 0
+        self.normal_track_chunk_counter = 0
+        self.transition_track_chunk_counter = 0
+
+        # Resetting tracks
+        self.normal_track.clear()
+        self.transition_track.clear()
+
+        # Loading first chunk
+        self.preload_chunk()
+        self.no_more_chunks_flag = False
+
+        self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
+        self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
+
+        self.transition_track_chunk_counter -= 1
 
     def map_direction_to_tile(self, tile_direction):
         if tile_direction == TileDirection.UP:
@@ -101,36 +146,28 @@ class Track:
 
     def preload_chunk(self):
         # Calculating if its possible to load a full chunk
-        remaining_tiles = len(self.track) - self.chunk
-        number_tiles_to_preload = self.chunk_size
+        remaining_tiles = len(self.track) - self.tile_counter
+        tiles_to_preload_limit = self.chunk_size
         if remaining_tiles < self.chunk_size:
-            number_tiles_to_preload = remaining_tiles
-        number_tiles_to_preload += self.chunk
-
+            tiles_to_preload_limit = remaining_tiles
+        tiles_to_preload_limit += self.tile_counter
 
         # Preloading tiles
-        to_preload_chunk = self.track[self.chunk:number_tiles_to_preload]
-        print(to_preload_chunk)
+        to_preload_chunk = self.track[self.tile_counter:tiles_to_preload_limit]
 
         # Creating tiles
         self.cached_track_chunk = list(map(self.map_direction_to_tile, to_preload_chunk))
 
-        # Calculating average track speed
-        self.cached_track_speed = (
-            sum(list(map(map_direction_to_horizontal_unitary, to_preload_chunk))),
-            sum(list(map(map_direction_to_vertical_unitary, to_preload_chunk)))
-        )
-
         # Increase chunk index
-        self.chunk += self.chunk_size
+        self.tile_counter = tiles_to_preload_limit
 
         # Set Flag
-        self.no_more_chunks_flag = self.chunk == self.total_tiles
+        self.no_more_chunks_flag = self.tile_counter == self.total_tiles
         self.preloaded_chunk_flag = True
 
     def load_track_chunk(self, track_chunk_type):
         if track_chunk_type == TrackChunkType.NORMAL:
-            if not self.no_more_chunks_flag:
+            if self.normal_track_chunk_counter < self.total_normal_track_chunks:
                 # Loading new normal track chunk
                 self.normal_track = self.cached_track_chunk[0:self.normal_track_size]
 
@@ -143,7 +180,8 @@ class Track:
                 ) + map_direction_to_vertical_unitary(self.normal_track[0].direction)) * self.tile_size
 
                 # Moving to new center
-                self.pivot_normal = np.subtract(self.pivot_transition, (offset_x, offset_y))
+                self.pivot_normal = np.add(self.pivot_transition, (offset_x, offset_y))
+                print(self.pivot_normal, self.pivot_transition)
 
                 # Setting first tile as Initial
                 self.normal_track[0] = self.TILE_INITIAL
@@ -152,11 +190,14 @@ class Track:
                 self.normal_chunk_flag = True
                 self.transition_chunk_flag = False
                 self.preloaded_chunk_flag = False
+
+                # Increasing counter
+                self.normal_track_chunk_counter += 1
             else:
                 self.normal_track.clear()
 
         elif track_chunk_type == TrackChunkType.TRANSITION:
-            if not self.no_more_chunks_flag:
+            if self.transition_track_chunk_counter < self.total_transition_track_chunks:
                 # Loading new transition track chunk
                 self.transition_track = self.cached_track_chunk[self.normal_track_size:]
 
@@ -164,13 +205,12 @@ class Track:
                 offset_x = (sum(
                     list(map(lambda x: map_direction_to_horizontal_unitary(x.direction), self.normal_track))
                 ) + map_direction_to_horizontal_unitary(self.transition_track[0].direction)) * self.tile_size
-                offset_y = ( sum(
+                offset_y = (sum(
                     list(map(lambda x: map_direction_to_vertical_unitary(x.direction), self.normal_track))
                 ) + map_direction_to_vertical_unitary(self.transition_track[0].direction)) * self.tile_size
 
                 # Moving to new center
-                self.pivot_transition = np.subtract(self.pivot_normal, (offset_x, offset_y))
-                print(self.pivot_normal, self.pivot_transition)
+                self.pivot_transition = np.add(self.pivot_normal, (offset_x, offset_y))
 
                 # Setting first tile as Initial
                 self.transition_track[0] = self.TILE_INITIAL
@@ -178,6 +218,9 @@ class Track:
                 # Modifying flags
                 self.normal_chunk_flag = False
                 self.transition_chunk_flag = True
+
+                # Increasing counter
+                self.transition_track_chunk_counter += 1
             else:
                 self.transition_track.clear()
         else:
