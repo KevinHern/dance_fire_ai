@@ -57,8 +57,6 @@ class Track:
         self.pivot_normal = (self.starting_x, self.starting_y)
         self.pivot_transition = (self.starting_x, self.starting_y)
 
-        print(self.pivot_normal, self.pivot_transition)
-
         # Initializing constants
         self.normal_track_size = 4
         self.transition_track_size = 4
@@ -89,8 +87,6 @@ class Track:
         self.normal_track_chunk_counter = 0
         self.transition_track_chunk_counter = 0
 
-        #print(self.total_normal_track_chunks, self.total_transition_track_chunks)
-
         # Loading first chunk
         self.preload_chunk()
         self.no_more_chunks_flag = False
@@ -104,8 +100,6 @@ class Track:
         # Resetting position
         self.pivot_normal = (self.starting_x, self.starting_y)
         self.pivot_transition = (self.starting_x, self.starting_y)
-
-        print(self.pivot_normal, self.pivot_transition)
 
         # Resetting Flags
         self.preloaded_chunk_flag = False
@@ -181,7 +175,6 @@ class Track:
 
                 # Moving to new center
                 self.pivot_normal = np.add(self.pivot_transition, (offset_x, offset_y))
-                print(self.pivot_normal, self.pivot_transition)
 
                 # Setting first tile as Initial
                 self.normal_track[0] = self.TILE_INITIAL
@@ -235,7 +228,6 @@ class Track:
     def draw(self, tile_index):
         # Checking if its necessary to preload
         next_index_tile = tile_index % 8
-        #print(next_index_tile, self.normal_chunk_flag, self.transition_chunk_flag, self.preloaded_chunk_flag)
         if next_index_tile == 6 and not self.normal_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
         elif next_index_tile == 2 and not self.transition_chunk_flag:
@@ -243,7 +235,6 @@ class Track:
         elif next_index_tile == 4 and not self.preloaded_chunk_flag:
             self.preload_chunk()
 
-        #print(self.pivot_normal, self.pivot_transition)
         with push_matrix():
             # Drawing Normal track
             translate(self.pivot_normal[0], self.pivot_normal[1])

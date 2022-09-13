@@ -49,10 +49,8 @@ class BeatCircles:
         current_tan = abs(tan(self.angle))
 
         if next_tile.value > 2:
-            #print(self.horizontal_threshold, current_tan)
             return current_tan <= self.horizontal_threshold
         else:
-            #print(self.vertical_threshold, current_tan)
             return current_tan >= self.vertical_threshold
 
     def change_anchor(self, tile_direction):
