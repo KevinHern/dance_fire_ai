@@ -1,4 +1,4 @@
-from constants import TileDirection
+from dance_fire_ice.utils.constants import TileDirection
 
 track_ai = [
     TileDirection.INITIAL,

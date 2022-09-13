@@ -1,5 +1,6 @@
 import numpy as np
 import timeit
+from p5 import PI, TWO_PI, HALF_PI, QUARTER_PI
 
 
 class NeuralNetwork:
@@ -25,22 +26,31 @@ class NeuralNetwork:
         z = np.matmul(self.input_weights, inputs)
         z = z + self.input_biases
 
+        z = np.array(list(map(self.relu, z)))
+
         z = np.matmul(z, self.hidden_weights)
         z = z + self.hidden_biases
+
+        z = np.array(list(map(self.relu, z)))
 
         z = np.matmul(z, self.output_weights)
         z = z + self.output_biases
 
-        z = self.sigmoid(z)
+        z = np.array(list(map(self.relu, z)))
 
-        return z[0]
+        return z
 
 
-# dummy = NeuralNetwork(
-#     number_inputs = 5, hidden_neurons = 4, output_neurons = 1
-# )
-#
-#
+dummy = NeuralNetwork(
+    number_inputs = 5, hidden_neurons = 4, output_neurons = 2
+)
+
+inputs = np.array([PI, 0, 0, 1, 0])
+
+print(dummy.forward_pass(
+    inputs=inputs
+))
+
 # print(timeit.timeit(lambda: dummy.forward_pass(
 #     angle=30,
 #     tile_up=0,

@@ -4,15 +4,15 @@ import numpy as np
 from random import randint
 
 # AI Game imports
-from ai_agent import AIAgent, crossover
-from track import Track
+from dance_fire_ice.models.ai_agent import AIAgent, crossover
+from dance_fire_ice.models.track import Track
 
 # Track imports
-from game_tracks import track_ai
+from dance_fire_ice.utils.game_tracks import track_ai
 
 # Optimization imports
 from threading import Thread
-from multi_threading import execute_agent_batch
+from dance_fire_ice.utils.multi_threading import execute_agent_batch
 
 
 ### INITIALIZING CONSTANTS ###

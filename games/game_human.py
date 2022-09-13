@@ -1,9 +1,9 @@
 import p5
 from p5 import *
-from beat_circles import BeatCircles
-from track import Track
-from constants import map_direction_to_track_speed
-from game_tracks import track_one, track_dummy, track_ai
+from dance_fire_ice.models.beat_circles import BeatCircles
+from dance_fire_ice.models.track import Track
+from dance_fire_ice.utils.constants import map_direction_to_track_speed
+from dance_fire_ice.utils.game_tracks import track_one, track_dummy, track_ai
 
 # Initializing constants
 width = 700

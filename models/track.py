@@ -1,5 +1,5 @@
 from p5 import *
-from constants import *
+from dance_fire_ice.utils.constants import *
 import numpy as np
 from math import ceil
 

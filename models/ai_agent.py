@@ -1,5 +1,5 @@
-from beat_circles import BeatCircles
-from neural_network import NeuralNetwork
+from dance_fire_ice.models.beat_circles import BeatCircles
+from dance_fire_ice.artificial_intelligence.neural_network import NeuralNetwork
 import numpy as np
 from random import randint, choice, random, uniform
 
@@ -106,7 +106,7 @@ class AIAgent:
         self.brain = NeuralNetwork(
             number_inputs=5,
             hidden_neurons=4,
-            output_neurons=1
+            output_neurons=2
         )
 
         # Global Game state
@@ -141,7 +141,7 @@ class AIAgent:
             result = self.brain.forward_pass(inputs=inputs)
 
             # The expected result of the AI is a number between [0, 1]
-            if result > 0.5:
+            if np.argmax(result) == 0:
                 # Perform action of the agent
                 if self.agent.change_anchor(tile_direction=next_tile_direction):
                     # The agent managed to successfully change tiles
