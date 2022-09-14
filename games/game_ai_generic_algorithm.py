@@ -4,7 +4,7 @@ import numpy as np
 from random import randint
 
 # AI Game imports
-from dance_fire_ice.models.ai_agent import AIAgent, crossover
+from dance_fire_ice.models.ai_agent_genetic_algorithm import AgentGA, crossover
 from dance_fire_ice.models.track import Track
 
 # Track imports
@@ -65,7 +65,7 @@ tile_size = circles_diameter / 2
 
 # Initializing Agents
 def create_agent():
-    return AIAgent(
+    return AgentGA(
         frame_rate=frame_rate,
         bpm=bpm,
         total_tiles=len(the_track),
@@ -84,7 +84,7 @@ agents = np.array(
         lambda x: create_agent(),
         agents
     )),
-    dtype=AIAgent
+    dtype=AgentGA
 )
 
 # Initialize the best agent with the first specimen
