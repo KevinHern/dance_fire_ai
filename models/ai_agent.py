@@ -8,7 +8,7 @@ def get_random_agent(population):
 
 
 class AIAgent:
-    REWARD = 15
+    REWARD = 20
     PENALIZATION = 20
 
     def __init__(
@@ -21,7 +21,7 @@ class AIAgent:
             diameter=10,
             circle_radius=20,
             lives=5,
-            learn=True
+            trainable=True
     ):
         # Creating Agent
         self.agent = BeatCircles(
@@ -43,16 +43,16 @@ class AIAgent:
 
         # Settings flags
         self.game_over = False
-        self.learn = learn
+        self.trainable = trainable
 
-    def reset(self, learn=False):
+    def reset(self, trainable=False):
         # Resetting agents variables
         self.lives = self.max_lives
         self.next_tile = 1
 
         # Resetting Flags
         self.game_over = False
-        self.learn = learn
+        self.trainable = trainable
 
         # Resetting Agent
         self.agent.reset()
