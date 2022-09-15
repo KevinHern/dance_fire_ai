@@ -79,11 +79,11 @@ def draw():
     # Draw the track for only one agent (the previous best one) to save up memory
     track.draw(tile_index=q_agent.next_tile)
 
-    # Perform action
-    q_agent.perform_action(next_tile_direction=track.track[q_agent.next_tile])
-
     # Draw agent
     q_agent.agent.draw()
+
+    # Perform action
+    q_agent.perform_action(next_tile_direction=track.track[q_agent.next_tile])
 
     # Check if simulation has ended
     if q_agent.game_over:

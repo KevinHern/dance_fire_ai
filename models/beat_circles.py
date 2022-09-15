@@ -1,4 +1,8 @@
+import numpy as np
+import p5
+
 from p5 import *
+from p5 import atan
 from dance_fire_ice.utils.constants import *
 
 
@@ -27,8 +31,14 @@ class BeatCircles:
 
         # Anchor variables
         relation = (circle_radius * 0.35) / diameter
-        self.horizontal_threshold = abs(tan(relation))
-        self.vertical_threshold = abs(tan(1 / relation))
+        # self.horizontal_threshold = abs(tan(relation))
+        # self.vertical_threshold = abs(tan(1 / relation))
+
+        self.threshold_angle = atan(relation)
+        self.right_threshold = np.array([0 + self.threshold_angle, TWO_PI - self.threshold_angle])
+        self.left_threshold = np.array([PI + self.threshold_angle, PI - self.threshold_angle])
+        self.up_threshold = np.array([(3*HALF_PI) + self.threshold_angle, (3*HALF_PI) - self.threshold_angle])
+        self.down_threshold = np.array([HALF_PI + self.threshold_angle, HALF_PI - self.threshold_angle])
 
     def draw(self):
         with push_matrix():
@@ -48,13 +58,16 @@ class BeatCircles:
             circle(self.radius, 0, self.circle_radius)
 
     def check_circles_angle(self, next_tile):
-        # Calculate current TAN value
-        current_tan = abs(tan(self.angle))
-
-        if next_tile.value > 2:
-            return current_tan <= self.horizontal_threshold
+        if next_tile == TileDirection.RIGHT:
+            return (self.angle <= self.right_threshold[0]) or (self.angle >= self.right_threshold[1])
+        elif next_tile == TileDirection.DOWN:
+            return (self.angle <= self.down_threshold[0]) and (self.angle >= self.down_threshold[1])
+        elif next_tile == TileDirection.LEFT:
+            return (self.angle <= self.left_threshold[0]) and (self.angle >= self.left_threshold[1])
+        elif next_tile == TileDirection.UP:
+            return (self.angle <= self.up_threshold[0]) and (self.angle >= self.up_threshold[1])
         else:
-            return current_tan >= self.vertical_threshold
+            return False
 
     def change_anchor(self, tile_direction):
         if self.check_circles_angle(next_tile=tile_direction):

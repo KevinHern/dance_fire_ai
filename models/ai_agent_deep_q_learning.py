@@ -96,8 +96,6 @@ class AgentQL(AIAgent):
 
     def perform_action(self, next_tile_direction):
         if not self.game_over:
-            # Reduce number of lives per action taken
-            self.lives -= 1
             self.game_over = self.lives == 0
 
             # Prepare inputs
@@ -132,13 +130,17 @@ class AgentQL(AIAgent):
                     self.rewards_batch.append(AgentQL.SUCCESSFUL_ANCHOR_REWARD)
 
                 else:
+                    # Reduce number of lives
+                    self.lives -= 1
+
                     # Punish for not properly waiting
                     self.rewards_batch.append(AgentQL.FAILED_WAIT)
             else:
-                # The agent does nothing
-
                 # Check if the agent could anchor
                 if self.agent.check_circles_angle(next_tile=next_tile_direction):
+                    # Reduce number of lives
+                    self.lives -= 1
+
                     # Punish for failed anchoring
                     self.rewards_batch.append(AgentQL.FAILED_ANCHOR_REWARD)
                 else:
