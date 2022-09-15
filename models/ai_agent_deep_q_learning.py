@@ -84,7 +84,7 @@ class AgentQL(AIAgent):
         self.checkpoint_next_tile = self.next_tile
 
     def take_action(self, inputs):
-        if self.trainable and random() < self.exploration_rate:
+        if self.trainable and self.exploration_rate < random():
             # Take one random action when exploring
             return randint(0, self.number_actions - 1)
         else:
@@ -107,14 +107,20 @@ class AgentQL(AIAgent):
             inputs[0] = self.agent.angle
             inputs[next_tile_direction.value] = 1
 
+            # Append inputs
+            self.inputs_batch.append(inputs)
+
+            # AI performs an action
             action = self.take_action(inputs=inputs)
+
+            # Reduce exploration rate
+            self.exploration_rate -= self.exploration_decay if self.exploration_rate > 0 else 0
 
             # Perform action of the agent
             if action == 0:
                 # The agent tries to anchor new center to a new position
                 if self.agent.change_anchor(tile_direction=next_tile_direction):
-                    # The agent managed to successfully change tiles
-                    # Move on to the next tile
+                    # The agent managed to successfully change tiles and moves on to the next tile
                     self.next_tile += 1
 
                     # Determine game over
@@ -123,63 +129,49 @@ class AgentQL(AIAgent):
                         self.next_tile -= 1
 
                     # Reward for successful anchoring
-                    return inputs, AgentQL.SUCCESSFUL_ANCHOR_REWARD
+                    self.rewards_batch.append(AgentQL.SUCCESSFUL_ANCHOR_REWARD)
 
                 else:
                     # Punish for not properly waiting
-                    return inputs, AgentQL.FAILED_WAIT
+                    self.rewards_batch.append(AgentQL.FAILED_WAIT)
             else:
                 # The agent does nothing
 
                 # Check if the agent could anchor
                 if self.agent.check_circles_angle(next_tile=next_tile_direction):
                     # Punish for failed anchoring
-                    return inputs, AgentQL.FAILED_ANCHOR_REWARD
+                    self.rewards_batch.append(AgentQL.FAILED_ANCHOR_REWARD)
                 else:
                     # Reward for waiting successfully
-                    return inputs, AgentQL.SUCCESSFUL_WAIT
+                    self.rewards_batch.append(AgentQL.SUCCESSFUL_WAIT)
 
-    def train(self, next_tile_direction):
-        # Check if the agent hasn't game over yet
-        if not self.game_over:
-            # Perform action
-            inputs, rewards = self.perform_action(next_tile_direction=next_tile_direction)
+    def train(self):
+        if self.trainable:
+            # Preparing inputs to train
+            train_batch = from_numpy(np.array(self.inputs_batch, dtype="float64"))
+            output_batch = from_numpy(np.array(self.rewards_batch, dtype="float64"))
 
-            # Check if the model is in training mode
-            if self.trainable:
-                # Append results of action
-                self.inputs_batch.append(inputs)
-                self.rewards_batch.append(rewards)
+            # Getting current network's thoughts
+            prediction_batch = self.brain(train_batch)
 
-                # Reduce exploration rate
-                self.exploration_rate -= self.exploration_decay if self.exploration_rate > 0 else 0
+            # Calculating loss
+            loss = self.loss_function(prediction_batch, output_batch)
 
-        else:
-            if self.trainable:
-                # Preparing inputs to train
-                train_batch = from_numpy(np.array(self.inputs_batch, dtype="float64"))
-                output_batch = from_numpy(np.array(self.rewards_batch, dtype="float64"))
+            # Reset Grads
+            self.brain.zero_grad()
 
-                # Getting current network's thoughts
-                prediction_batch = self.brain(train_batch)
+            # Back propagation
+            loss.backward()
+            self.optimizer.step()
 
-                # Calculating loss
-                loss = self.loss_function(prediction_batch, output_batch)
+    def reset_agent(self):
+        # Resetting agent
+        self.reset(trainable=self.current_episode < self.max_episodes)
 
-                # Reset Grads
-                self.brain.zero_grad()
+        # Resetting Q Variables
+        self.current_episode += 1
+        print("New Episode:", self.current_episode)
 
-                # Back propagation
-                loss.backward()
-                self.optimizer.step()
-
-            # Resetting agent
-            self.lives = self.max_lives
-            self.current_episode += 1
-
-            self.inputs_batch.clear()
-            self.rewards_batch.clear()
-
-            # Determining if training just finished
-            self.trainable = self.current_episode == self.max_episodes
+        self.inputs_batch.clear()
+        self.rewards_batch.clear()
 
