@@ -58,9 +58,13 @@ class Track:
         self.pivot_transition = (self.starting_x, self.starting_y)
 
         # Initializing constants
-        self.normal_track_size = 4
-        self.transition_track_size = 4
+        self.normal_track_size = 8
+        self.transition_track_size = 8
         self.chunk_size = self.normal_track_size + self.transition_track_size
+
+        self.when_to_preload = self.chunk_size - 4
+        self.when_to_load_transition = self.normal_track_size - 2
+        self.when_to_load_normal = self.chunk_size - 2
 
         # Initializing tracks
         self.cached_track_chunk = []
@@ -227,12 +231,12 @@ class Track:
 
     def draw(self, tile_index):
         # Checking if its necessary to preload
-        next_index_tile = tile_index % 8
-        if next_index_tile == 6 and not self.normal_chunk_flag:
+        next_index_tile = tile_index % self.chunk_size
+        if next_index_tile == self.when_to_load_normal and not self.normal_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.NORMAL)
-        elif next_index_tile == 2 and not self.transition_chunk_flag:
+        elif next_index_tile == self.when_to_load_transition and not self.transition_chunk_flag:
             self.load_track_chunk(track_chunk_type=TrackChunkType.TRANSITION)
-        elif next_index_tile == 4 and not self.preloaded_chunk_flag:
+        elif next_index_tile == self.when_to_preload and not self.preloaded_chunk_flag:
             self.preload_chunk()
 
         with push_matrix():
