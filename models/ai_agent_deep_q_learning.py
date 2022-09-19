@@ -110,12 +110,20 @@ class AgentQL(AIAgent):
 
         self.save_model_checkpoint = save_model_checkpoint
 
+        # Stats variables
+        self.random_actions_counter = 0
+        self.brain_actions_counter = 0
+
     def take_action(self, inputs):
-        if self.trainable and self.exploration_rate < random():
+        if self.trainable and (self.exploration_rate > random()):
             # Take one random action when exploring
+            self.random_actions_counter += 1
+
             return randint(0, self.number_actions - 1)
         else:
             # Forward pass
+            self.brain_actions_counter += 1
+
             result = self.brain(from_numpy(inputs))
             numpy_result = result.cpu().detach().numpy()
 
@@ -162,7 +170,6 @@ class AgentQL(AIAgent):
                 if self.agent.check_circles_angle(next_tile=next_tile_direction):
                     # Reduce number of lives
                     self.lives -= 1
-                    print(self.lives)
 
                     # Punish for failed anchoring
                     self.rewards_batch.append(AgentQL.FAILED_ANCHOR_REWARD)
@@ -201,11 +208,13 @@ class AgentQL(AIAgent):
             self.save_model()
 
     def print_stats(self):
-        message = "---END OF EPISODE {}---\n".format(self.current_episode)
+        message = "\n---END OF EPISODE {}---\n".format(self.current_episode)
         message += "Current Exploration Probability: {:.2f}%\n".format(self.exploration_rate * 100)
         message += "Reached Tile number {} out of {}\n".format(self.next_tile - 1, self.total_tiles)
         message += "Track {:.2f}% completed\n".format(100*(self.next_tile - 1)/self.total_tiles)
-        message += "Total Lives used: {}\n".format(self.max_lives - self.lives + 1)
+        message += "Total Mistakes (lives) committed: {}\n".format(self.max_lives - self.lives + 1)
+        message += "Total Random Actions Taken: {}\n".format(self.random_actions_counter)
+        message += "Total Brain Actions Taken: {}".format(self.brain_actions_counter)
         print(message)
 
     def reset_agent(self):
@@ -220,6 +229,10 @@ class AgentQL(AIAgent):
 
         self.inputs_batch.clear()
         self.rewards_batch.clear()
+
+        # Resetting Stats Variables
+        self.random_actions_counter = 0
+        self.brain_actions_counter = 0
 
     def save_model(self):
         # Naming model
@@ -239,3 +252,5 @@ class AgentQL(AIAgent):
         # Loading model
         self.brain = load(model_path)
         self.brain.train()
+
+
