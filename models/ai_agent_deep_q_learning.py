@@ -19,6 +19,23 @@ from os import getcwd
 from os.path import join, split
 
 
+def get_q_model_directory(model_name):
+    # Get models directory
+    directory_name = "deep_q_models"
+
+    # Creating path
+    cwd = getcwd()
+    split_path = list(split(cwd))
+    split_path[-1] = directory_name
+    split_path.append(model_name)
+
+    model_path = join(split_path[0])
+    for i in range(len(split_path)):
+        model_path = join(model_path, split_path[i])
+
+    return model_path
+
+
 class AgentQL(AIAgent):
     REWARD = 100
     PUNISHMENT = 0
@@ -190,36 +207,19 @@ class AgentQL(AIAgent):
 
     def save_model(self):
         # Naming model
-        directory_name = "deep_q_models"
         model_name = "dql_model_ep_" + str(self.current_episode) + ".pt"
 
-        # Creating path
-        cwd = getcwd()
-        split_path = list(split(cwd))
-        split_path[-1] = directory_name
-        split_path.append(model_name)
-
-        model_path = join(split_path[0])
-        for i in range(len(split_path)):
-            model_path = join(model_path, split_path[i])
+        model_path = get_q_model_directory(model_name=model_name)
 
         # Saving model
         save(self.brain, model_path)
 
     def load_model(self, episode):
         # Naming model
-        directory_name = "deep_q_models"
-        model_name = "dql_model_ep_" + str(self.current_episode) + ".pt"
+        model_name = "dql_model_ep_" + str(episode) + ".pt"
 
-        # Creating path
-        cwd = getcwd()
-        split_path = list(split(cwd))
-        split_path[-1] = directory_name
-        split_path.append(model_name)
+        model_path = get_q_model_directory(model_name=model_name)
 
-        model_path = join(split_path[0])
-        for i in range(len(split_path)):
-            model_path = join(model_path, split_path[i])
-
-        # Saving model
+        # Loading model
         self.brain = load(model_path)
+        self.brain.train()

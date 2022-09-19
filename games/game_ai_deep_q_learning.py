@@ -8,11 +8,7 @@ from dance_fire_ice.models.ai_agent_deep_q_learning import AgentQL
 from dance_fire_ice.models.track import Track
 
 # Track imports
-from dance_fire_ice.utils.game_tracks import track_ai
-
-# Optimization imports
-from threading import Thread
-from dance_fire_ice.utils.multi_threading import execute_agent_batch
+from dance_fire_ice.utils.game_tracks import track_ai1, track_ai2, track_ai3, track_ai4
 
 
 ### INITIALIZING CONSTANTS ###
@@ -21,13 +17,13 @@ width = 1250
 height = 800
 frame_rate = 60
 
-starting_x = width / 16
-starting_y = height / 16
+starting_x = width / 2
+starting_y = height / 2
 
 screen_speed = (0, 0)
 
 # Track Variables
-the_track = track_ai
+the_track = track_ai1
 
 # Agents variables
 circles_diameter = 100
@@ -38,7 +34,22 @@ bpm = 115
 tile_size = circles_diameter / 2
 
 max_episodes = 400
+
+# Train Batch
 actions = 512
+
+# Initializing Track
+track = Track(
+    pivot_x=starting_x,
+    pivot_y=starting_y,
+    tile_size=tile_size,
+    track=the_track
+)
+
+# Shuffling tracks
+tracks_training = [track_ai1, track_ai2, track_ai3, track_ai4]
+current_track = 0
+episodes_per_track = 10
 
 # Initializing Agents
 q_agent = AgentQL(
@@ -50,30 +61,23 @@ q_agent = AgentQL(
         diameter=circles_diameter,
         circle_radius=circles_radius,
         actions=actions,
-        max_episodes=max_episodes
+        max_episodes=max_episodes,
+        save_model_checkpoint=episodes_per_track,
     )
 
-# Initializing Track
-track = Track(
-    pivot_x=starting_x,
-    pivot_y=starting_y,
-    tile_size=tile_size,
-    track=the_track
-)
+# Loading existing model
+q_agent.load_model(episode=10)
 
-q_agent.save_model()
 
 # Setting up canvas and overall simulation
 def setup():
     size(width, height)
-    # no_loop()
 
 
 # Repainting the canvas
 def draw():
-    exit()
-    global starting_x
-    global starting_y
+    global current_track
+    global track
 
     # Clean Canvas
     background(0)
@@ -92,11 +96,22 @@ def draw():
         # Train agent
         q_agent.train()
 
+        # Shuffling track
+        current_track += 1 if (q_agent.current_episode + 1) % episodes_per_track == 0 else 0
+        current_track = current_track % len(tracks_training)
+        track_to_train = tracks_training[current_track]
+
+        # Initializing new track
+        track = Track(
+            pivot_x=starting_x,
+            pivot_y=starting_y,
+            tile_size=tile_size,
+            track=track_to_train
+        )
+
         # Reset agent
         q_agent.reset_agent()
-
-        # Reset track
-        track.reset()
+        q_agent.total_tiles = len(track_to_train)
 
 
 def mouse_pressed():
@@ -109,7 +124,6 @@ if __name__ == '__main__':
 
 '''
     # TO DO
-    - Optimize the draw() function by parallelize the perform_action with multi threading
-    - Add screen info
-    - Save best weights
+    - Shuffle between tracks so the AI can learn other movements and not get biased
+    - Print stats every N episodes
 '''
