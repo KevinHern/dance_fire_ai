@@ -3,7 +3,7 @@ from p5 import *
 from dance_fire_ice.models.beat_circles import BeatCircles
 from dance_fire_ice.models.track import Track
 from dance_fire_ice.utils.constants import map_direction_to_track_speed
-from dance_fire_ice.utils.game_tracks import track_one, track_dummy, track_ai
+from dance_fire_ice.utils.game_tracks import track_one, track_ai4
 
 # Initializing constants
 width = 700
@@ -28,7 +28,7 @@ beat_circles = BeatCircles(frame_rate=60,
                            circle_radius=circles_radius
                            )
 
-the_track = track_ai
+the_track = track_ai4
 
 track = Track(
     pivot_x=starting_x,

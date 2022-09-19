@@ -162,6 +162,7 @@ class AgentQL(AIAgent):
                 if self.agent.check_circles_angle(next_tile=next_tile_direction):
                     # Reduce number of lives
                     self.lives -= 1
+                    print(self.lives)
 
                     # Punish for failed anchoring
                     self.rewards_batch.append(AgentQL.FAILED_ANCHOR_REWARD)
@@ -203,19 +204,19 @@ class AgentQL(AIAgent):
         message = "---END OF EPISODE {}---\n".format(self.current_episode)
         message += "Current Exploration Probability: {:.2f}%\n".format(self.exploration_rate * 100)
         message += "Reached Tile number {} out of {}\n".format(self.next_tile - 1, self.total_tiles)
-        message += "Track {:.2f}% completed\n".format((self.next_tile - 1)/self.total_tiles)
+        message += "Track {:.2f}% completed\n".format(100*(self.next_tile - 1)/self.total_tiles)
         message += "Total Lives used: {}\n".format(self.max_lives - self.lives + 1)
         print(message)
 
     def reset_agent(self):
-        # Resetting Q Variables
-        self.current_episode += 1
-
         # Print stats
         self.print_stats()
 
         # Resetting agent
         self.reset(trainable=self.current_episode < self.trainable_episodes)
+
+        # Resetting Q Variables
+        self.current_episode += 1
 
         self.inputs_batch.clear()
         self.rewards_batch.clear()
