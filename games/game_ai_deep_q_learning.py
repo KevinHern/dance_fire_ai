@@ -61,6 +61,7 @@ track = Track(
     track=the_track
 )
 
+q_agent.save_model()
 
 # Setting up canvas and overall simulation
 def setup():
@@ -70,6 +71,7 @@ def setup():
 
 # Repainting the canvas
 def draw():
+    exit()
     global starting_x
     global starting_y
 

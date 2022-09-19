@@ -10,10 +10,13 @@ from dance_fire_ice.artificial_intelligence.neural_network_torch import TorchNeu
 from torch import from_numpy
 from torch.nn import HuberLoss
 from torch.optim import SGD
+from torch import save, load
 
 # Utils
 import numpy as np
 from random import randint, choice, random, uniform
+from os import getcwd
+from os.path import join, split
 
 
 class AgentQL(AIAgent):
@@ -41,7 +44,8 @@ class AgentQL(AIAgent):
             trainable=True,
             number_tiles_checkpoint=5,
             max_episodes=100,
-            alpha=0.93
+            alpha=0.93,
+            save_model_checkpoint=5,
     ):
         # Initializing parent class's
         super(AgentQL, self).__init__(
@@ -82,6 +86,8 @@ class AgentQL(AIAgent):
         # Additional Q variables
         self.number_tiles_checkpoint = number_tiles_checkpoint
         self.checkpoint_next_tile = self.next_tile
+
+        self.save_model_checkpoint = save_model_checkpoint
 
     def take_action(self, inputs):
         if self.trainable and self.exploration_rate < random():
@@ -148,6 +154,7 @@ class AgentQL(AIAgent):
                     self.rewards_batch.append(AgentQL.SUCCESSFUL_WAIT)
 
     def train(self):
+        # Train model
         if self.trainable:
             # Preparing inputs to train
             train_batch = from_numpy(np.array(self.inputs_batch, dtype="float64"))
@@ -166,6 +173,10 @@ class AgentQL(AIAgent):
             loss.backward()
             self.optimizer.step()
 
+        # Save model
+        if self.current_episode % self.save_model_checkpoint == 0:
+            self.save_model()
+
     def reset_agent(self):
         # Resetting agent
         self.reset(trainable=self.current_episode < self.max_episodes)
@@ -177,3 +188,38 @@ class AgentQL(AIAgent):
         self.inputs_batch.clear()
         self.rewards_batch.clear()
 
+    def save_model(self):
+        # Naming model
+        directory_name = "deep_q_models"
+        model_name = "dql_model_ep_" + str(self.current_episode) + ".pt"
+
+        # Creating path
+        cwd = getcwd()
+        split_path = list(split(cwd))
+        split_path[-1] = directory_name
+        split_path.append(model_name)
+
+        model_path = join(split_path[0])
+        for i in range(len(split_path)):
+            model_path = join(model_path, split_path[i])
+
+        # Saving model
+        save(self.brain, model_path)
+
+    def load_model(self, episode):
+        # Naming model
+        directory_name = "deep_q_models"
+        model_name = "dql_model_ep_" + str(self.current_episode) + ".pt"
+
+        # Creating path
+        cwd = getcwd()
+        split_path = list(split(cwd))
+        split_path[-1] = directory_name
+        split_path.append(model_name)
+
+        model_path = join(split_path[0])
+        for i in range(len(split_path)):
+            model_path = join(model_path, split_path[i])
+
+        # Saving model
+        self.brain = load(model_path)
