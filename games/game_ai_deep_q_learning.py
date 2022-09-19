@@ -66,7 +66,7 @@ q_agent = AgentQL(
     )
 
 # Loading existing model
-q_agent.load_model(episode=10)
+# q_agent.load_model(episode=10)
 
 
 # Setting up canvas and overall simulation

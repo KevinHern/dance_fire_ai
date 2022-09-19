@@ -2,6 +2,8 @@
 # https://www.analyticsvidhya.com/blog/2019/04/introduction-deep-q-learning-python/
 
 # Models
+import math
+
 from dance_fire_ice.models.ai_agent import AIAgent
 from dance_fire_ice.models.beat_circles import BeatCircles
 from dance_fire_ice.artificial_intelligence.neural_network_torch import TorchNeuralNetwork
@@ -17,6 +19,7 @@ import numpy as np
 from random import randint, choice, random, uniform
 from os import getcwd
 from os.path import join, split
+from math import ceil
 
 
 def get_q_model_directory(model_name):
@@ -90,12 +93,13 @@ class AgentQL(AIAgent):
         self.number_actions = 2
 
         self.current_episode = 1
+        self.trainable_episodes = ceil(max_episodes*0.90)
         self.max_episodes = max_episodes
 
         self.alpha = alpha
 
         self.exploration_rate = 1.0
-        self.exploration_decay = (4*self.exploration_rate)/(3*self.max_episodes)
+        self.exploration_decay = self.exploration_rate/self.trainable_episodes
 
         self.inputs_batch = []
         self.rewards_batch = []
@@ -119,8 +123,6 @@ class AgentQL(AIAgent):
 
     def perform_action(self, next_tile_direction):
         if not self.game_over:
-            self.game_over = self.lives == 0
-
             # Prepare inputs
             inputs = np.empty(5)
             inputs.fill(0)
@@ -133,9 +135,6 @@ class AgentQL(AIAgent):
 
             # AI performs an action
             action = self.take_action(inputs=inputs)
-
-            # Reduce exploration rate
-            self.exploration_rate -= self.exploration_decay if self.exploration_rate > 0 else 0
 
             # Perform action of the agent
             if action == 0:
@@ -170,6 +169,9 @@ class AgentQL(AIAgent):
                     # Reward for waiting successfully
                     self.rewards_batch.append(AgentQL.SUCCESSFUL_WAIT)
 
+            # Determine Game Over
+            self.game_over = self.lives == 0
+
     def train(self):
         # Train model
         if self.trainable:
@@ -190,17 +192,30 @@ class AgentQL(AIAgent):
             loss.backward()
             self.optimizer.step()
 
+            # Reduce exploration rate
+            self.exploration_rate -= self.exploration_decay if self.exploration_rate > 0 else 0
+
         # Save model
         if self.current_episode % self.save_model_checkpoint == 0:
             self.save_model()
 
-    def reset_agent(self):
-        # Resetting agent
-        self.reset(trainable=self.current_episode < self.max_episodes)
+    def print_stats(self):
+        message = "---END OF EPISODE {}---\n".format(self.current_episode)
+        message += "Current Exploration Probability: {:.2f}%\n".format(self.exploration_rate * 100)
+        message += "Reached Tile number {} out of {}\n".format(self.next_tile - 1, self.total_tiles)
+        message += "Track {:.2f}% completed\n".format((self.next_tile - 1)/self.total_tiles)
+        message += "Total Lives used: {}\n".format(self.max_lives - self.lives + 1)
+        print(message)
 
+    def reset_agent(self):
         # Resetting Q Variables
         self.current_episode += 1
-        print("New Episode:", self.current_episode)
+
+        # Print stats
+        self.print_stats()
+
+        # Resetting agent
+        self.reset(trainable=self.current_episode < self.trainable_episodes)
 
         self.inputs_batch.clear()
         self.rewards_batch.clear()
