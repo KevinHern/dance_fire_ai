@@ -77,6 +77,9 @@ There will be 4 types of rewards:
 - Succesful Waiting: It rewards the AI by waiting when the spinning ball is not in the threshold
 - Failed Anchoring: It punishes the AI when it decides to not anchor whithin the allowed threshold
 
+## Training
+The agents will be subjected to 4 different tracks where each one trains 2 inputs. Track AI1 and AI2 help with training the Right and Left direction while Track AI3 and AI4 help with training the Up and Down direction.
+  
 ## Evaluation Time
 The agents were given a total amount of mistakes that they can commit. Once they have reached the limit, the reach the 'game over' state and can no longer play.
 
