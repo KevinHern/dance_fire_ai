@@ -5,7 +5,6 @@
 import math
 
 from dance_fire_ice.models.ai_agent import AIAgent
-from dance_fire_ice.models.beat_circles import BeatCircles
 from dance_fire_ice.artificial_intelligence.neural_network_torch import TorchNeuralNetwork
 
 # AI Libraries
@@ -16,10 +15,11 @@ from torch import save, load
 
 # Utils
 import numpy as np
-from random import randint, choice, random, uniform
+from random import randint, random
 from os import getcwd
 from os.path import join, split
 from math import ceil
+import logging
 
 
 def get_q_model_directory(model_name):
@@ -114,6 +114,15 @@ class AgentQL(AIAgent):
         self.random_actions_counter = 0
         self.brain_actions_counter = 0
 
+        # Initializing logger
+        logging.basicConfig(
+            filename='training_log_q_learning.log',
+            filemode='w',
+            level=logging.INFO,
+            format='\n%(asctime)s-%(levelname)s> %(message)s',
+            datefmt='%d-%b-%y %H:%M:%S'
+        )
+
     def take_action(self, inputs):
         if self.trainable and (self.exploration_rate > random()):
             # Take one random action when exploring
@@ -207,7 +216,7 @@ class AgentQL(AIAgent):
         if self.current_episode % self.save_model_checkpoint == 0:
             self.save_model()
 
-    def print_stats(self):
+    def log_stats(self):
         message = "\n---END OF EPISODE {}---\n".format(self.current_episode)
         message += "Current Exploration Probability: {:.2f}%\n".format(self.exploration_rate * 100)
         message += "Reached Tile number {} out of {}\n".format(self.next_tile - 1, self.total_tiles)
@@ -215,11 +224,15 @@ class AgentQL(AIAgent):
         message += "Total Mistakes (lives) committed: {}\n".format(self.max_lives - self.lives + 1)
         message += "Total Random Actions Taken: {}\n".format(self.random_actions_counter)
         message += "Total Brain Actions Taken: {}".format(self.brain_actions_counter)
-        print(message)
+
+        # Logging
+        logging.info(
+            msg=message
+        )
 
     def reset_agent(self):
         # Print stats
-        self.print_stats()
+        self.log_stats()
 
         # Resetting agent
         self.reset(trainable=self.current_episode < self.trainable_episodes)
